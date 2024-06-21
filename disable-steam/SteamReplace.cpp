@@ -106,10 +106,12 @@ void SteamReplace::SteamInit(HMODULE steam_api) {
 }
 
 void __stdcall SteamReplace::SteamCallBacks(void* steam_callbacks) {
-	for (unsigned short i = 0; i < SteamReplace::SteamCallbackOffsetsSize; i++) {
-		if (*(int*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i])) {
-			SteamReplace::SteamAPI_UnregisterCallback((void*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i]));
-			*(int*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i]) = NULL;
+	if (SteamReplace::SteamAPI_UnregisterCallback) {
+		for (unsigned short i = 0; i < SteamReplace::SteamCallbackOffsetsSize; i++) {
+			if (*(int*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i])) {
+				SteamReplace::SteamAPI_UnregisterCallback((void*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i]));
+				*(int*)(((intptr_t)steam_callbacks) + SteamReplace::SteamCallbackOffsets[i]) = NULL;
+			}
 		}
 	}
 
