@@ -35,10 +35,10 @@ UsercallFuncVoid(SteamStats, (int a1, int a2), (a1, a2), (intptr_t)0x40E880, rEA
 UsercallFuncVoid(LeaderboardLoad, (int a1), (a1), (intptr_t)0x4108B0, rESI);
 UsercallFunc(signed int, LeaderboardsMenu, (int a1), (a1), (intptr_t)0x40F520, rEAX, rEBX);
 
-class SteamReplace
-{
+class SteamReplace {
 	public:
 		static void init();
+		static void __stdcall SteamCallBacks(void*);
 		static void LeaderboardDownload();
 		static void SteamStatistics(int, int);
 		static void LoadLeaderboard(int);
@@ -47,8 +47,24 @@ class SteamReplace
 		static bool CheckNoInternetConnection();
 		static void ShowNoInternetDialog();
 		static void RunCallbacks();
+		static void DisableSteamMenuEntriesUp();
+		static void DisableSteamMenuEntriesDown();
+		static void SkipSteamMainMenuEntries();
+		static void ModifyMainMenuEntriesPositions();
+		static inline void* JumpNormalMenuItemUp = (void*)0x664FD9;
+		static inline void* JumpDisableMenuItemUp = (void*)0x664FD1;
+		static inline void* JumpNormalMenuItemDown = (void*)0x665015;
+		static inline void* JumpDisableMenuItemDown = (void*)0x66500D;
+		static inline void* JumpBackToMenuItem = (void*)0x66968E;
+		static inline void* JumpToSkipMenuItem = (void*)0x669604;
+		static inline void* JumpToPositionCalcReturn = (void*)0x6696BD;
+		static inline void* MenuItemPositionConstant = (void*)0x1A3D678;
 
 	private:
-		static void FindSteam();
+		static inline void(__cdecl* SteamAPI_UnregisterCallback)(void* callbacks) = nullptr;
+		static inline unsigned short SteamCallbackOffsets[] = { 0, 20, 40 };
+		static inline unsigned short SteamCallbackOffsetsSize = sizeof(SteamReplace::SteamCallbackOffsets) / sizeof(unsigned short);
+		static void FindSteamModule();
 		static void SteamInit(HMODULE);
+		static void DisableSteamOnlineChecks();
 };
