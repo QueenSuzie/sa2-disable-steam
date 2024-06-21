@@ -189,7 +189,7 @@ __declspec(naked) void SteamReplace::SkipSteamMainMenuEntries() {
 		jmp		SteamReplace::JumpBackToMenuItem
 
 DISABLE_MENU:
-		inc     esi
+		inc		esi
 		jmp		SteamReplace::JumpToSkipMenuItem
 	}
 }
