@@ -30,6 +30,7 @@ typedef std::wstring TString;
 #endif
 
 DataPointer(DWORD, dword_1AF19FC, 0x1AF19FC);
+DataArray(int, StandardPauseMenuItems, 0x1A558C4, 6);
 
 UsercallFuncVoid(SteamStats, (int a1, int a2), (a1, a2), (intptr_t)0x40E880, rEAX, rECX);
 UsercallFuncVoid(LeaderboardLoad, (int a1), (a1), (intptr_t)0x4108B0, rESI);
@@ -51,6 +52,8 @@ class SteamReplace {
 		static void DisableSteamMenuEntriesDown();
 		static void SkipSteamMainMenuEntries();
 		static void ModifyMainMenuEntriesPositions();
+		static void LoadPauseMenuAssets();
+		static void RemapPauseOptions();
 		static inline void* JumpNormalMenuItemUp = (void*)0x664FD9;
 		static inline void* JumpDisableMenuItemUp = (void*)0x664FD1;
 		static inline void* JumpNormalMenuItemDown = (void*)0x665015;
@@ -58,6 +61,7 @@ class SteamReplace {
 		static inline void* JumpBackToMenuItem = (void*)0x66968E;
 		static inline void* JumpToSkipMenuItem = (void*)0x669604;
 		static inline void* JumpToPositionCalcReturn = (void*)0x6696BD;
+		static inline void* JumpReturnToPauseSelection = (void*)0x43B124;
 		static inline void* MenuItemPositionConstant = (void*)0x1A3D678;
 
 	private:
@@ -67,4 +71,6 @@ class SteamReplace {
 		static void FindSteamModule();
 		static void SteamInit(HMODULE);
 		static void DisableSteamOnlineChecks();
+		static void DisableSteamMainMenuOptions();
+		static void DisableSteamPauseMenuOptions();
 };

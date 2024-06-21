@@ -25,11 +25,15 @@ FunctionHook<void> hLeaderboardDownload((intptr_t)0x4120C0);
 FunctionHook<bool> hCheckNoInternetConnection((intptr_t)0x411AE0);
 FunctionHook<void> hShowNoInternet((intptr_t)0x411B30);
 FunctionHook<void> hAchievementsMenu((intptr_t)0x40D300);
+FunctionHook<void> hLoadPauseMenuAssets((intptr_t)0x439610);
 StdcallFunctionHook<void, void*> hSteamCallBacks((intptr_t)0x40A8F0);
 
 void SteamReplace::init() {
 	SteamReplace::FindSteamModule();
 	SteamReplace::DisableSteamOnlineChecks();
+	SteamReplace::DisableSteamMainMenuOptions();
+	SteamReplace::DisableSteamPauseMenuOptions();
+
 	hSteamCallBacks.Hook(SteamCallBacks);
 	hLeaderboardDownload.Hook(LeaderboardDownload);
 	SteamStats.Hook(SteamStatistics);
@@ -38,24 +42,27 @@ void SteamReplace::init() {
 	hCheckNoInternetConnection.Hook(CheckNoInternetConnection);
 	hShowNoInternet.Hook(ShowNoInternetDialog);
 	hAchievementsMenu.Hook(AchievementsMenu);
+	hLoadPauseMenuAssets.Hook(LoadPauseMenuAssets);
+}
 
-	WriteJump((void*)0x664FCB, &SteamReplace::DisableSteamMenuEntriesUp);
-	WriteData<1>((void*)0x664FD0, 0x90u);
-	WriteJump((void*)0x665007, &SteamReplace::DisableSteamMenuEntriesDown);
-	WriteData<1>((void*)0x66500C, 0x90u);
+void SteamReplace::FindSteamModule() {
+	DWORD cbNeeded;
+	HMODULE hMods[1024];
+	HANDLE currentProcess = GetCurrentProcess();
+	TCHAR steamApi[] = { 's', 't', 'e', 'a', 'm', '_', 'a', 'p', 'i', NULL };
 
-	WriteJump((void*)0x669646, &SteamReplace::SkipSteamMainMenuEntries);
-	WriteData<1>((void*)0x66964B, 0x90u);
-	WriteData<1>((void*)0x66964C, 0x90u);
-	WriteData<1>((void*)0x66964D, 0x90u);
-	WriteData<1>((void*)0x66964E, 0x90u);
-
-	WriteJump((void*)0x6696B3, &SteamReplace::ModifyMainMenuEntriesPositions);
-	WriteData<1>((void*)0x6696B8, 0x90u);
-	WriteData<1>((void*)0x6696B9, 0x90u);
-	WriteData<1>((void*)0x6696BA, 0x90u);
-	WriteData<1>((void*)0x6696BB, 0x90u);
-	WriteData<1>((void*)0x6696BC, 0x90u);
+	if (currentProcess && EnumProcessModules(currentProcess, hMods, sizeof(hMods), &cbNeeded)) {
+		unsigned short hModsSize = cbNeeded / sizeof(HMODULE);
+		for (unsigned short i = 0; i < hModsSize; i++) {
+			TCHAR szModName[MAX_PATH];
+			if (GetModuleFileNameEx(currentProcess, hMods[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
+				TString modName(szModName);
+				if (modName.find(steamApi) != std::string::npos) {
+					return SteamReplace::SteamInit(hMods[i]);
+				}
+			}
+		}
+	}
 }
 
 void SteamReplace::DisableSteamOnlineChecks() {
@@ -81,23 +88,83 @@ void SteamReplace::DisableSteamOnlineChecks() {
 	WriteData<1>((void*)0x40A53A, 0x90u);
 }
 
-void SteamReplace::FindSteamModule() {
-	DWORD cbNeeded;
-	HMODULE hMods[1024];
-	HANDLE currentProcess = GetCurrentProcess();
-	TCHAR steamApi[] = { 's', 't', 'e', 'a', 'm', '_', 'a', 'p', 'i', NULL };
+void SteamReplace::DisableSteamMainMenuOptions() {
+	WriteJump((void*)0x664FCB, &SteamReplace::DisableSteamMenuEntriesUp);
+	WriteData<1>((void*)0x664FD0, 0x90u);
+	WriteJump((void*)0x665007, &SteamReplace::DisableSteamMenuEntriesDown);
+	WriteData<1>((void*)0x66500C, 0x90u);
 
-	if (currentProcess && EnumProcessModules(currentProcess, hMods, sizeof(hMods), &cbNeeded)) {
-		unsigned short hModsSize = cbNeeded / sizeof(HMODULE);
-		for (unsigned short i = 0; i < hModsSize; i++) {
-			TCHAR szModName[MAX_PATH];
-			if (GetModuleFileNameEx(currentProcess, hMods[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
-				TString modName(szModName);
-				if (modName.find(steamApi) != std::string::npos) {
-					return SteamReplace::SteamInit(hMods[i]);
-				}
-			}
-		}
+	WriteJump((void*)0x669646, &SteamReplace::SkipSteamMainMenuEntries);
+	WriteData<1>((void*)0x66964B, 0x90u);
+	WriteData<1>((void*)0x66964C, 0x90u);
+	WriteData<1>((void*)0x66964D, 0x90u);
+	WriteData<1>((void*)0x66964E, 0x90u);
+
+	WriteJump((void*)0x6696B3, &SteamReplace::ModifyMainMenuEntriesPositions);
+	WriteData<1>((void*)0x6696B8, 0x90u);
+	WriteData<1>((void*)0x6696B9, 0x90u);
+	WriteData<1>((void*)0x6696BA, 0x90u);
+	WriteData<1>((void*)0x6696BB, 0x90u);
+	WriteData<1>((void*)0x6696BC, 0x90u);
+}
+
+void SteamReplace::DisableSteamPauseMenuOptions() {
+	// Without Restart
+	WriteData<1>((void*)0x43AE6B, 3);
+	WriteData<1>((void*)0x43B06B, 3);
+	WriteData<1>((void*)0x43B1A9, 3);
+	WriteData<1>((void*)0x43B1CF, 3);
+	WriteData<1>((void*)0x43B221, 3);
+	WriteData<1>((void*)0x440B66, 3);
+
+	// With Restart
+	WriteData<1>((void*)0x43AE95, 4);
+	WriteData<1>((void*)0x43B0A2, 4);
+	WriteData<1>((void*)0x43B177, 4);
+	WriteData<1>((void*)0x43B195, 4);
+	WriteData<1>((void*)0x43B1CB, 4);
+	WriteData<1>((void*)0x43B21D, 4);
+	WriteData<1>((void*)0x43B248, 4);
+
+	// Menu Size Switches
+	WriteData<1>((void*)0x43F4CB, 3);
+	WriteData<1>((void*)0x43F5E6, 3);
+	WriteData<1>((void*)0x43F514, 0x2C);
+	WriteData<1>((void*)0x43F625, 0x2C);
+
+	// Pause Options Remapping
+	WriteJump((void*)0x43B11F, &SteamReplace::RemapPauseOptions);
+}
+
+void SteamReplace::LoadPauseMenuAssets() {
+	hLoadPauseMenuAssets.Original();
+
+	int help = StandardPauseMenuItems[4];
+	int exit = StandardPauseMenuItems[5];
+	StandardPauseMenuItems[4] = StandardPauseMenuItems[2];
+	StandardPauseMenuItems[5] = StandardPauseMenuItems[3];
+	StandardPauseMenuItems[2] = help;
+	StandardPauseMenuItems[3] = exit;
+}
+
+__declspec(naked) void SteamReplace::RemapPauseOptions() {
+	__asm {
+		mov		al, ds:0x1933EB1 // PauseSelection
+		cmp		ds:0x1933EB2, 3
+		je		NO_LIVES
+		cmp		al, 2
+		jl		RETURN
+
+ADJUST:
+		add		al, 2
+
+RETURN:
+		jmp		SteamReplace::JumpReturnToPauseSelection
+
+NO_LIVES:
+		cmp		al, 1
+		jl		RETURN
+		jmp		ADJUST
 	}
 }
 
